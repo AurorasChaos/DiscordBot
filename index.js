@@ -179,9 +179,14 @@ Please provide a value to select one of the search results ranging from 1-10.
 		return msg.channel.send(`🎶 Now playing: **${serverQueue.songs[0].title}**`);
 	} else if (command === 'queue') {
 		if (!serverQueue) return msg.channel.send('There is nothing playing.');
+    if (10 < serverQueue.length){
+      const upperLimit = 20
+    } else {
+      const upperLimit = serverQueue.length - 1
+    }
 		return msg.channel.send(`
 __**Song queue:**__
-${serverQueue.songs.slice(0,20).map(song => `**-** ${song.title}`).join('\n')}
+${serverQueue.songs.slice(0,upperLimit).map(song => `**-** ${song.title}`).join('\n')}
 **Now playing:** ${serverQueue.songs[0].title}
 		`);
 	} else if (command === 'pause') {
