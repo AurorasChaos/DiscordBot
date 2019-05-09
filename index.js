@@ -72,8 +72,12 @@ client.on('message', async msg => {
         value: "My Ping: " + client.ping + 'ms'
       }],}})}
   if (command == "shutdown"){
-	msg.channel.send("Shutting down, without restarting")
-    client.destroy()
+	  if(msg.member.roles.has('575926970727006208')){	
+		msg.channel.send("Shutting down, without restarting")
+		client.destroy()
+  } else {
+	msg.channel.send("You aren't the bot author.")  
+  }
   }
   if (command == 'info'){
 	  msg.channel.send({embed: {
@@ -81,7 +85,19 @@ client.on('message', async msg => {
 		fields: [{
 			name: "Info",
 			value: "Started development on 08/05, serving 1 server"
-	  }],}})}
+	  }],
+	}}
+   )}
+   if (command == "restart"){
+	   if(msg.member.roles.has('575926970727006208')){		   
+			msg.channel.send("Restarting now, will send a message once I'm back")
+			client.destroy()
+			client.login(TOKEN)
+   } else {
+	   msg.channel.send("You aren't the bot author")
+   }
+   }
+   
 	if (command === 'play') {
 		const voiceChannel = msg.member.voiceChannel;
 		if (!voiceChannel) return msg.channel.send('I\'m sorry but you need to be in a voice channel to play music!');
