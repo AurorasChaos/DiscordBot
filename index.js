@@ -30,6 +30,7 @@ client.on('message', async msg => {
 
 	let command = msg.content.toLowerCase().split(' ')[0];
 	command = command.slice(PREFIX.length)
+
   if (command == 'kick') {
     const user = msg.mentions.users.first();
     if (user) {
@@ -71,14 +72,16 @@ client.on('message', async msg => {
         name: "Pong",
         value: "My Ping: " + client.ping + 'ms'
       }],}})}
+
   if (command == "shutdown"){
-	  if(msg.member.roles.has('575926970727006208')){	
-		msg.channel.send("Shutting down, without restarting")
-		client.destroy()
+	  if(msg.author.id == "186188409499418628"){	
+		  msg.channel.send("Shutting down, without restarting")
+		  client.destroy()
   } else {
 	msg.channel.send("You aren't the bot author.")  
   }
   }
+
   if (command == 'info'){
 	  msg.channel.send({embed: {
 		color: 0x2ed32e,
@@ -88,8 +91,9 @@ client.on('message', async msg => {
 	  }],
 	}}
    )}
+
    if (command == "restart"){
-	   if(msg.member.roles.has('575926970727006208')){		   
+	   if(msg.author.id == "186188409499418628"){		   
 			msg.channel.send("Restarting now, will send a message once I'm back")
 			client.destroy()
 			client.login(TOKEN)
@@ -177,7 +181,7 @@ Please provide a value to select one of the search results ranging from 1-10.
 		if (!serverQueue) return msg.channel.send('There is nothing playing.');
 		return msg.channel.send(`
 __**Song queue:**__
-${serverQueue.songs.map(song => `**-** ${song.title}`).join('\n')}
+${serverQueue.songs.slice(0,20).map(song => `**-** ${song.title}`).join('\n')}
 **Now playing:** ${serverQueue.songs[0].title}
 		`);
 	} else if (command === 'pause') {
