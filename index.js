@@ -62,7 +62,11 @@ client.on('message', async msg => {
           msg.reply('I was unable to ban the member');
           console.error(err);
         })
+      } else {
+        msg.reply("That user isn't in this guild!")
       }
+    } else {
+      msg.reply("You didn't mention the user to kick!")
     }
   }
   if (command == 'ping'){
@@ -71,7 +75,12 @@ client.on('message', async msg => {
       fields: [{
         name: "Pong",
         value: "My Ping: " + client.ping + 'ms'
-      }],}})}
+      }],
+    }}
+  ).then(msg => {msg.delete(10000)})
+  msg.delete(100)
+  console.log("Deleted a $ping command:")
+  }
 
   if (command == "shutdown"){
 	  if(msg.author.id == "186188409499418628"){	
@@ -92,6 +101,15 @@ client.on('message', async msg => {
 	}}
    )}
 
+  if (command =='purge'){
+    const deleteCount = parseInt(args[1], 10);
+    if (!deleteCount || deleteCount < 2 || deleteCount > 100){ 
+    return msg.reply("Please provide a number between 2 and 100");
+    }
+    const fetched = await msg.channel.fetchMessages({limit : deleteCount});
+    msg.channel.bulkDelete(fetched).catch(error => message.reply(`Couldn\'t delete message because of ${error}`))
+  }
+
    if (command == "restart"){
 	   if(msg.author.id == "186188409499418628"){		   
 			msg.channel.send("Restarting now, will send a message once I'm back")
@@ -104,7 +122,11 @@ client.on('message', async msg => {
    
 	if (command === 'play') {
 		const voiceChannel = msg.member.voiceChannel;
-		if (!voiceChannel) return msg.channel.send('I\'m sorry but you need to be in a voice channel to play music!');
+		if (!voiceChannel) {
+      msg.channel.send('I\'m sorry but you need to be in a voice channel to play music!');
+      msg.delete(100)
+      return console.log(msg.author + "tried to use the play command while not in a channel:");
+    }
 		const permissions = voiceChannel.permissionsFor(msg.client.user);
 		if (!permissions.has('CONNECT')) {
 			return msg.channel.send('I cannot connect to your voice channel, make sure I have the proper permissions!');
@@ -180,7 +202,7 @@ Please provide a value to select one of the search results ranging from 1-10.
 	} else if (command === 'queue') {
 		if (!serverQueue) return msg.channel.send('There is nothing playing.');
     if (10 < serverQueue.length){
-      const upperLimit = 20
+      const upperLimit = 10
     } else {
       const upperLimit = serverQueue.length - 1
     }
