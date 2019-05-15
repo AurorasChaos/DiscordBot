@@ -49,10 +49,18 @@ client.on('message', async msg => {
   if (command == "setprefix"){
     var serverID = msg.guild.id;
     if (!args[1]){
-      return msg.reply("You didn't give a prefix.").then(msg => {msg.delete(5000)});
+      msg.reply("You didn't give a prefix.").then(msg => {msg.delete(5000)});
+      return msg.delete(100)
     }
-    SERVERPREFIXES.serverID = args[1];
-    msg.delete(500)
+    SERVERPREFIXES[serverID] = args[1];
+    msg.reply(`You updated the prefix to: ${args[1]}`).then(msg => {msg.delete(5000)});
+    msg.delete(100)
+    console.log(SERVERPREFIXES)
+  } else if (command == "currentprefix"){
+    var serverID = msg.guild.id;
+    console.log(SERVERPREFIXES)
+    msg.reply(`The current prefix is: ${SERVERPREFIXES[serverID]}`).then(msg => msg.delete(5000)).catch(err => console.log(`An issue was encounterd reading the prefix: ${err}`));
+    msg.delete(100)
   }
 
   if (command == "createvc"){
