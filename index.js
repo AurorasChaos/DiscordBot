@@ -1,13 +1,16 @@
 const { Client, Util } = require('discord.js');
-const { TOKEN, PREFIX, GOOGLE_API_KEY } = require('./config');
+var { TOKEN, PREFIX, GOOGLE_API_KEY, SERVERPREFIXES } = require('./config');
 const YouTube = require('simple-youtube-api');
 const ytdl = require('ytdl-core');
-
 const client = new Client({ disableEveryone: true });
-
 const youtube = new YouTube(GOOGLE_API_KEY);
-
 const queue = new Map();
+
+//
+//npm install ffmpeg-binaries
+//npm install --global --production windows-build-tools
+//npm install node-opus
+//
 
 client.on('guildCreate', guild => {
   console.log(`New guild joined: ${guild.name} (id: ${guild.id}) This guild has ${guild.memberCount} members!`);
@@ -24,7 +27,7 @@ client.on('warn', console.warn);
 client.on('error', console.error);
 
 client.on('ready', () => {
-  console.log('Yo this ready!')
+  console.log('Begining to launch.')
   client.user.setActivity(`Serving ${client.guilds.size} server(s)`)
 });
 
@@ -33,7 +36,6 @@ client.on('disconnect', () => console.log('I just disconnected, no idea why just
 client.on('reconnecting', () => console.log('I am reconnecting now!'));
 
 client.on('message', async msg => { 
-	if (msg.author.bot) return undefined;
 	if (!msg.content.startsWith(PREFIX)) return undefined;
 
 	const args = msg.content.split(' ');
@@ -42,8 +44,77 @@ client.on('message', async msg => {
 	const serverQueue = queue.get(msg.guild.id);
 
 	let command = msg.content.toLowerCase().split(' ')[0];
-	command = command.slice(PREFIX.length)
+	command = command.slice(PREFIX.length)	
 
+  if (command == "setprefix"){
+    var serverID = msg.guild.id;
+    if (!args[1]){
+      return msg.reply("You didn't give a prefix.").then(msg => {msg.delete(5000)});
+    }
+    SERVERPREFIXES.serverID = args[1];
+    msg.delete(500)
+  }
+
+  if (command == "createvc"){
+    console.log("Creating a new private voice channel.")
+    var ChannelName = args[1]
+    msg.guild.createRole({
+      name: msg.author.id
+    }).then(role => {
+      msg.guild.createChannel("1" + ChannelName, 'voice').then(channel => {
+        if (msg.guild.id == "577423436461244426"){
+          channel.setParent('577782300880928768');
+        } else if (msg.guild.id == "331848466173001730"){
+          channel.setParent('577868646630555708') 
+        }
+        const everyone = msg.guild.roles.find(role => role.name === "@everyone");
+        channel.overwritePermissions(everyone, {"VIEW_CHANNEL": false});
+        channel.overwritePermissions(role, {"VIEW_CHANNEL" : true});
+        var user = msg.author;
+        if (user){
+          var member = msg.guild.member(user);
+          if (member){
+            member.addRole(role)
+          }
+        }
+        var user = msg.mentions.users;
+        user.forEach(user => {
+            var member = msg.guild.member(user);
+            member.addRole(role)
+          }
+        )
+      })
+    })
+    msg.reply("Everything is ready.").then(msg => {msg.delete(5000)})
+    msg.delete(100)
+  } else if (command == "cleanupvcs"){
+    if (msg.author.id == "186188409499418628"){
+        var servers =  msg.guild.channels;
+        servers.forEach(server => {
+          if (server.parentID == "577782300880928768" || server.parentID == "577868646630555708"){
+          server.delete('Cleaning up old channels.').then(deleted => console.log(`Deleted ${deleted.name} as part of clean up.`)).catch(console.error);
+          }
+        })
+        var roles = msg.guild.roles;
+        roles.forEach(role => {
+          var rolename = role.name
+          if (rolename.match(/^\d/)){
+            role.delete("Deleted as part of cleanup").then(deleted => console.log(`Deleted ${deleted.name} as part of clean up.`)).catch(console.error);
+          }
+        })
+    }
+    msg.reply("Succesfully cleaned up both roles and channels.").then(msg => msg.delete(5000));
+    msg.delete(100);
+  }
+
+  if (command == "pingpong"){
+    msg.channel.send("$pongping")
+    console.log("Sent pingpong command: ")
+  } else if (command == "pongping"){
+    msg.channel.send("$pingpong")
+    console.log("Sent pongping command: ")
+  }
+  
   if (command == 'kick') {
     const user = msg.mentions.users.first();
     if (user) {
@@ -58,15 +129,13 @@ client.on('message', async msg => {
         msg.delete(100)
       } else {
         msg.reply('That user isn\'t in this guild!').then(msg => {msg.delete(5000)});
-		msg.delete(500)
+		msg.delete(100)
       }
     } else {
       msg.reply("You didn\'t mention the user to kick!").then(msg => {msg.delete(5000)});
-	  msg.delete(500)
+	  msg.delete(100)
     }
-  }
-
-  if (command == 'ban') {
+  } else if (command == 'ban') {
     const user = msg.mentions.users.first();
     if (user) {
       const member = msg.guild.member(user);
@@ -134,12 +203,12 @@ client.on('message', async msg => {
   if (command == "restart"){
 	   if(msg.author.id == "186188409499418628"){		   
 			msg.channel.send("Restarting now, will send a message once I'm back").then(msg => {msg.delete(5000)})
-      msg.delete(500)
+      msg.delete(100)
 			client.destroy()
 			client.login(TOKEN)
     } else {
 	   msg.channel.send("You aren't the bot author").then(msg => {msg.delete(5000)})
-     msg.delete(500)
+     msg.delete(100)
     }
   }
    
@@ -177,10 +246,10 @@ client.on('message', async msg => {
       __**Song selection:**__
       ${videos.map(video2 => `**${++index} -** ${video2.title}`).join('\n')}
       Please provide a value to select one of the search results ranging from 1-10.
-					`).then(msg => {msg.delete(11000)});
-          msg.delete(500)
+					`).then(msg => {msg.delete(10000)});
+          msg.delete(100)
 					try {
-						var response = await msg.channel.awaitMessages(msg2 => msg2.content > 0 && msg2.content < 11, {
+						var response = await msg.channel.awaitMessages(msg2 =>  msg2.content > 0 && msg2.content < 11, {
 							maxMatches: 1,
 							time: 10000,
 							errors: ['time']
@@ -206,10 +275,10 @@ client.on('message', async msg => {
     }
 		if (!serverQueue){
       msg.channel.send('There is nothing playing that I could skip for you.').then(msg => {msg.delete(5000)});
-		}
       msg.delete(100)
-	serverQueue.connection.dispatcher.end('Skip command has been used!');
+		  serverQueue.connection.dispatcher.end('Skip command has been used!');
 		  return undefined;
+    }
 	} else if (command === 'stop') {
 		if (!msg.member.voiceChannel){
       msg.channel.send('You are not in a voice channel!').then(msg => {msg.delete(5000)});
@@ -219,54 +288,49 @@ client.on('message', async msg => {
       msg.channel.send('There is nothing playing that I could stop for you.').then(msg => {msg.delete(5000)});
 		  serverQueue.songs = [];
 		  serverQueue.connection.dispatcher.end('Stop command has been used!');
-      msg.delete(500)
+      msg.delete(100)
 		  return undefined;
     }
 	} else if (command === 'volume') {
 		if (!msg.member.voiceChannel){
       msg.channel.send('You are not in a voice channel!').then(msg => {msg.delete(5000)});
-      msg.delete(500)
+      msg.delete(100)
       return console.log(msg.author + ": wasn't in a VC.")
     }
 		if (!serverQueue){
       msg.channel.send('There is nothing playing.').then(msg => {msg.delete(5000)});
-      msg.delete(500)
+      msg.delete(100)
       return console.log("There was nothing playing.")
     }
 		if (!args[1]){ 
       msg.channel.send(`The current volume is: **${serverQueue.volume}**`).then(msg => {msg.delete(5000)});
-      msg.delete(500)
+      msg.delete(100)
       return console.log(`The volume changed to **${serverQueue.volume}**`)
     }
 		if (args[1] < 2.1){
 			serverQueue.volume = args[1];
 			serverQueue.connection.dispatcher.setVolumeLogarithmic(args[1] / 5);
 			msg.channel.send(`I set the volume to: **${args[1]}**`).then(msg => {msg.delete(5000)});
-      msg.delete(500)
+      msg.delete(100)
       return console.log(`Set the value to **${args[1]}**`)
 		  } else { 
 			msg.channel.send("You tryna kill someone with that volume?").then(msg => {msg.delete(5000)});
 		}
 
 	} else if (command === 'np') {
-		if (!serverQueue){
-			msg.channel.send('There is nothing playing.').then(msg => {msg.delete(5000)});
-			msg.delete(500)
-		}
+		if (!serverQueue) return msg.channel.send('There is nothing playing.').then(msg => {msg.delete(5000)});
 		msg.channel.send(`🎶 Now playing: **${serverQueue.songs[0].title}**`).then(msg => {msg.delete(5000)});
-		msg.delete
-		return console.log(msg.author + " : requested the np song.")
+		return msg.delete(100)	
 	} else if (command === 'queue') {
 		if (!serverQueue) {
       msg.channel.send('There is nothing playing.').then(msg => {msg.delete(5000)});
-      msg.delete(500)
+      msg.delete(100)
     }
-		  return msg.channel.send(`
+		msg.channel.send(`
       __**Song queue:**__
-      ${serverQueue.songs.map(song => `**-** ${song.title}`).join('\n')}
-      **Now playing:** ${serverQueue.songs[0].title}
-		  `).then(msg => {msg.delete(60000)});
-		msg.delete(500)
+      ${serverQueue.songs.map(song => `**-** ${song.title}`).join('\n')} 
+       **Now playing:** ${serverQueue.songs[0].title}`).then(msg => {msg.delete(60000)}).catch(error => console.log(`Failed to print queue due to: ${error}`));
+    msg.delete(100)
 	} else if (command === 'pause') {
 		if (serverQueue && serverQueue.playing) {
 			serverQueue.playing = false;
@@ -320,10 +384,9 @@ async function handleVideo(video, msg, voiceChannel, playlist = false) {
 		console.log(serverQueue.songs);
 		if (playlist) return undefined;
 		else return msg.channel.send(`✅ **${song.title}** has been added to the queue!`);
-	}
+  }
 	return undefined;
 }
-
 function play(guild, song) {
 	const serverQueue = queue.get(guild.id);
 
@@ -347,4 +410,4 @@ function play(guild, song) {
 	serverQueue.textChannel.send(`🎶 Start playing: **${song.title}**`);
 }
 
-client.login(TOKEN);
+client.login(TOKEN);	
