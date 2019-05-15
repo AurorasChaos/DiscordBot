@@ -1,5 +1,6 @@
 const { Client, Util } = require('discord.js');
-var { TOKEN, PREFIX, GOOGLE_API_KEY, SERVERPREFIXES } = require('./config');
+const { TOKEN, PREFIX, GOOGLE_API_KEY, SERVERPREFIXES } = require('./config');
+console.log(SERVERPREFIXES)
 const YouTube = require('simple-youtube-api');
 const ytdl = require('ytdl-core');
 const client = new Client({ disableEveryone: true });
@@ -36,7 +37,7 @@ client.on('disconnect', () => console.log('I just disconnected, no idea why just
 client.on('reconnecting', () => console.log('I am reconnecting now!'));
 
 client.on('message', async msg => { 
-	if (!msg.content.startsWith(PREFIX)) return undefined;
+	if (!msg.content.startsWith(SERVERPREFIXES[String(msg.guild.id)])) return undefined;
 
 	const args = msg.content.split(' ');
 	const searchString = args.slice(1).join(' ');
