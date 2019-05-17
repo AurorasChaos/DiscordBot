@@ -9,4 +9,5 @@
 -Minigames within discord (WIP)
 -Customization per server.
 -Ability to make private VCs(Expanding to accompanying text channel
+-Main development is in the 'experimental branch', 'master' branch is stable.
 
