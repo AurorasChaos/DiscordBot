@@ -1,17 +1,17 @@
 const { Client, Util } = require('discord.js');
 const { TOKEN, PREFIX, GOOGLE_API_KEY, SERVERPREFIXES } = require('./config');
-console.log(SERVERPREFIXES)
 const YouTube = require('simple-youtube-api');
 const ytdl = require('ytdl-core');
 const client = new Client({ disableEveryone: true });
 const youtube = new YouTube(GOOGLE_API_KEY);
-const queue = new Map();
+const queue = new Map()
+const https = require('https');
 
+//Commands to enable the project to work properly.
 //
 //npm install ffmpeg-binaries
 //npm install --global --production windows-build-tools
 //npm install node-opus
-//
 
 client.on('guildCreate', guild => {
   console.log(`New guild joined: ${guild.name} (id: ${guild.id}) This guild has ${guild.memberCount} members!`);
@@ -35,37 +35,138 @@ client.on('ready', () => {
 client.on('disconnect', () => console.log('I just disconnected, no idea why just making sure you know, I will reconnect now...'));
 
 client.on('reconnecting', () => console.log('I am reconnecting now!'));
+var AdvancedLoggingOn = true;
+function Logging(message,msg){
+  if (AdvancedLoggingOn == true){
+    console.log(`${msg.author} : ${message}`)
+  }
+}
 
-client.on('message', async msg => { 
+client.on('message', async msg => {
 	if (!msg.content.startsWith(SERVERPREFIXES[String(msg.guild.id)])) return undefined;
-
 	const args = msg.content.split(' ');
 	const searchString = args.slice(1).join(' ');
 	const url = args[1] ? args[1].replace(/<(.+)>/g, '$1') : '';
 	const serverQueue = queue.get(msg.guild.id);
 
 	let command = msg.content.toLowerCase().split(' ')[0];
-	command = command.slice(PREFIX.length)	
+	command = command.slice(PREFIX.length)
+
+  if (command == "enablelogging"){
+    if (msg.author.id == "186188409499418628"){
+      AdvancedLoggingOn = true;
+      Logging("Enabled Logging", msg)
+    }
+  } else if(command == "disablelogging"){
+    if (msg.author.id == "186188409499418628"){
+      AdvancedLoggingOn = false;
+      Logging("Disabled Logging", msg)
+    }
+  }
 
   if (command == "setprefix"){
     var serverID = msg.guild.id;
     if (!args[1]){
       msg.reply("You didn't give a prefix.").then(msg => {msg.delete(5000)});
+      Logging("Tried to set the prefix", msg);
       return msg.delete(100)
     }
     SERVERPREFIXES[serverID] = args[1];
     msg.reply(`You updated the prefix to: ${args[1]}`).then(msg => {msg.delete(5000)});
+    Logging("Succesfully updated the prefix", msg)
     msg.delete(100)
-    console.log(SERVERPREFIXES)
   } else if (command == "currentprefix"){
     var serverID = msg.guild.id;
-    console.log(SERVERPREFIXES)
     msg.reply(`The current prefix is: ${SERVERPREFIXES[serverID]}`).then(msg => msg.delete(5000)).catch(err => console.log(`An issue was encounterd reading the prefix: ${err}`));
+    Logging("Requested the current prefix", msg)
     msg.delete(100)
   }
 
+  if (command == "crackstatus"){
+	  if (args[1] == "request"){
+		  var Game_Name = args[2]
+		  var v = 0;
+		  var Game_Found = false;
+		  while (Game_Found == false){
+			  var data = https.get("https://api.crackwatch.com/api/games?page="+String(v), (resp) =>{
+				let data = '';
+				resp.on('data', (chunk) => {
+					data += chunk
+				});
+				resp.on('end', () => {
+					data = JSON.parse(data)
+					for (i=0; i < 30;i++){
+            console.log(`Pass number : ${i}, ${v} `)
+						if (data[i].title.includes(Game_Name)){
+              Game_Found = true;
+							return msg.channel.send(`\`\`\`\Game Name: ${data[i].title}\n Is AAA?: ${data[i].isAAA}\n Cracked by: ${data[i].groups}\n Release Date: ${data[i].releaseDate}\n Crack Date: ${data[i].crackDate}  \`\`\``).then(msg => {msg.delete(60000)})
+						}
+					}
+				});
+			v += 1
+			if (v > 100) {
+				Game_Found = true;
+				return msg.reply("Unable to find the game in a reasonable ammount of time, please check spelling and try again.")
+			}
+		})
+    }	
+	  } else if (args[1] == "recent"){
+		  if (args[2] == "cracked"){
+			  var CrackedOnly = true;
+		  } else if(args[2] == "released"){
+			  var CrackedOnly = false;
+		  } else if(args[3] == "aaa"){
+			  var AAAOnly = true;
+		  } else if(args[3] == "all"){
+		  	var AAAOnly = false;
+		  }
+		
+		  var data = https.get("https://api.crackwatch.com/api/games?page=0&is_aaa=" + String(AAAOnly) + "&is_cracked=" + String(CrackedOnly), (resp) => {
+			  let data = '';
+			  resp.on('data', (chunk) => {
+				data += chunk
+			  });
+			  resp.on('end', () => {
+				  data = JSON.parse(data)
+          for (i=0; i < args[4];i++){
+				  return msg.channel.send(`\`\`\`\Game Name: ${data[i].title}\n Is AAA?: ${data[i].isAAA}\n Cracked by: ${data[i].groups}\n Release Date: ${data[i].releaseDate}\n Crack Date: ${data[i].crackDate}  \`\`\``).then(msg => {msg.delete(60000)})
+          }
+        })
+		  })
+	  }
+  }
+
+  if (command == "crackwatch"){
+    if (args[1] == "recent"){
+      if (args[2] == "all"){
+        var url2 = "https://api.crackwatch.com/api/games?page=0&is_cracked=true&sort_by=crack_date&sort_inverted=true"
+      } else if (args[2] == "aaa"){
+        var url2 = "https://api.crackwatch.com/api/games?page=0&is_aaa=true&is_cracked=true&sort_by=crack_date&sort_inverted=true"
+      }
+    } else if(args[1] == "normal"){
+      if (args[2] == "all"){
+        var url2 = "https://api.crackwatch.com/api/games?page=0&is_cracked=true&sort_by=release_date"
+      } else if (args[2] == "aaa"){
+        var url2 = "https://api.crackwatch.com/api/games?page=0&is_aaa=true&is_cracked=true&sort_by=release_date"
+      }
+    }
+      var data = https.get(url2, (resp) =>{
+        let data = '';
+        resp.on('data', (chunk) => {
+          data += chunk;
+        });
+        resp.on('end', () => {
+          console.log(JSON.parse(data));
+          data = JSON.parse(data)  
+          for (i=0; i < args[3];i++){
+            msg.channel.send(`\`\`\`\Game Name: ${data[i].title}\n Is AAA?: ${data[i].isAAA}\n Cracked by: ${data[i].groups}\n Release Date: ${data[i].releaseDate}\n Crack Date: ${data[i].crackDate}  \`\`\``).then(msg => {msg.delete(60000)}).catch(err => console.log(error))
+          }      
+        }) 
+      }).on("error", (err) => {
+        console.log("Error: " + err.message);
+      }) 
+  }
   if (command == "createvc"){
-    console.log("Creating a new private voice channel.")
     var ChannelName = args[1]
     msg.guild.createRole({
       name: msg.author.id
@@ -95,6 +196,7 @@ client.on('message', async msg => {
       })
     })
     msg.reply("Everything is ready.").then(msg => {msg.delete(5000)})
+    Logging("Succesfully created a private VC", msg)
     msg.delete(100)
   } else if (command == "cleanupvcs"){
     if (msg.author.id == "186188409499418628"){
@@ -111,6 +213,7 @@ client.on('message', async msg => {
             role.delete("Deleted as part of cleanup").then(deleted => console.log(`Deleted ${deleted.name} as part of clean up.`)).catch(console.error);
           }
         })
+        Logging("Succesfully cleaned up voice channels", msg)
     }
     msg.reply("Succesfully cleaned up both roles and channels.").then(msg => msg.delete(5000));
     msg.delete(100);
@@ -119,9 +222,11 @@ client.on('message', async msg => {
   if (command == "pingpong"){
     msg.channel.send("$pongping")
     console.log("Sent pingpong command: ")
+    
   } else if (command == "pongping"){
     msg.channel.send("$pingpong")
     console.log("Sent pongping command: ")
+    Logging("Succesfully sent pongping command", msg)
   }
   
   if (command == 'kick') {
@@ -131,9 +236,10 @@ client.on('message', async msg => {
       if (member) {
         member.kick('I felt like it.').then(() => {
           msg.reply(`Succesfully kicked ${user.tag}`).then(msg => {msg.delete(10000)});
+          
         }).catch(err => {
           msg.reply('I was unable to kick the member').then(msg => {msg.delete(5000)});
-          console.error(err);
+          Logging(`Attempted to kick ${user.tag}`, msg)
         });
         msg.delete(100)
       } else {
@@ -165,8 +271,8 @@ client.on('message', async msg => {
       msg.reply("You didn't mention the user to kick!").then(msg => {msg.delete(5000)})
     }
   }
-
   if (command == 'ping'){
+    console.log("Triggered the ping command")
     msg.channel.send({embed: {
       color: 0x2ed32e,
       fields: [{
@@ -206,7 +312,7 @@ client.on('message', async msg => {
     return msg.reply("Please provide a number between 2 and 100").then(msg => {msg.delete(5000)});
     }
     const fetched = await msg.channel.fetchMessages({limit : deleteCount});
-    msg.channel.bulkDelete(fetched).catch(error => message.reply(`Couldn\'t delete message because of ${error}`).then(msg => {msg.delete(5000)}))
+    msg.channel.bulkDelete(fetched).catch(error => msg.reply(`Couldn\'t delete message because of ${error}`).then(msg => {msg.delete(5000)}))
   }
 
   if (command == "restart"){
@@ -296,10 +402,10 @@ client.on('message', async msg => {
 		if (!serverQueue){ 
       msg.channel.send('There is nothing playing that I could stop for you.').then(msg => {msg.delete(5000)});
 		  serverQueue.songs = [];
-		  serverQueue.connection.dispatcher.end('Stop command has been used!');
-      msg.delete(100)
-		  return undefined;
     }
+		serverQueue.connection.dispatcher.end('Stop command has been used!');
+    msg.delete(100)
+		return undefined;
 	} else if (command === 'volume') {
 		if (!msg.member.voiceChannel){
       msg.channel.send('You are not in a voice channel!').then(msg => {msg.delete(5000)});
@@ -316,13 +422,13 @@ client.on('message', async msg => {
       msg.delete(100)
       return console.log(`The volume changed to **${serverQueue.volume}**`)
     }
-		if (args[1] < 2.1){
+		if (args[1] < 5.1){
 			serverQueue.volume = args[1];
 			serverQueue.connection.dispatcher.setVolumeLogarithmic(args[1] / 5);
 			msg.channel.send(`I set the volume to: **${args[1]}**`).then(msg => {msg.delete(5000)});
       msg.delete(100)
       return console.log(`Set the value to **${args[1]}**`)
-		  } else { 
+      } else { 
 			msg.channel.send("You tryna kill someone with that volume?").then(msg => {msg.delete(5000)});
 		}
 
@@ -335,10 +441,18 @@ client.on('message', async msg => {
       msg.channel.send('There is nothing playing.').then(msg => {msg.delete(5000)});
       msg.delete(100)
     }
+    var NewSongList = serverQueue.songs;
+    if (NewSongList.length < 10){
+      var SliceLimit = NewSongList.length;
+    } else {
+      var SliceLimit = 10;
+    }
+    var NewSongList = NewSongList.slice(SliceLimit-1);
+    console.log(NewSongList.length);
 		msg.channel.send(`
       __**Song queue:**__
-      ${serverQueue.songs.map(song => `**-** ${song.title}`).join('\n')} 
-       **Now playing:** ${serverQueue.songs[0].title}`).then(msg => {msg.delete(60000)}).catch(error => console.log(`Failed to print queue due to: ${error}`));
+      ${NewSongList.map(song => `**-** ${song.title}`).join('\n')} 
+       **Now playing:** ${NewSongList[0].title}`).then(msg => {msg.delete(60000)}).catch(error => console.log(`Failed to print queue due to: ${error}`));
     msg.delete(100)
 	} else if (command === 'pause') {
 		if (serverQueue && serverQueue.playing) {
@@ -372,7 +486,7 @@ async function handleVideo(video, msg, voiceChannel, playlist = false) {
 			voiceChannel: voiceChannel,
 			connection: null,
 			songs: [],
-			volume: 0.7,
+			volume: 1.5,
 			playing: true
 		};
 		queue.set(msg.guild.id, queueConstruct);
