@@ -157,15 +157,22 @@ client.on('message', async msg => {
         });
         resp.on('end', () => {
           console.log(JSON.parse(data));
-          data = JSON.parse(data)  
-          for (i=0; i < args[3];i++){
-            msg.channel.send(`\`\`\`\Game Name: ${data[i].title}\n Is AAA?: ${data[i].isAAA}\n Cracked by: ${data[i].groups}\n Release Date: ${data[i].releaseDate}\n Crack Date: ${data[i].crackDate}  \`\`\``).then(msg => {msg.delete(60000)}).catch(err => console.log(error))
-          }      
-        }) 
-      }).on("error", (err) => {
-        console.log("Error: " + err.message);
-      }) 
-  }
+          data = JSON.parse(data)
+		  const Discord = require('discord.js');
+		    for (i=0; i < args[3];i++){ 
+			var embed = new Discord.RichEmbed()
+			embed.setImage(`${data[i].image}`)
+			embed.setTitle(`${data[i].title}`)
+			embed.setTimestamp()
+			embed.addField(`Is AAA?`,`${data[i].isAAA}`)
+			embed.addField(`Cracked by:`,`${data[i].groups}`)
+			embed.addField(`Release Date:`,`${data[i].releaseDate}`)
+			embed.addField(`Crack Date:`,`${data[i].crackDate}`)
+			embed.addField(`Protections: `,`${data[i].protections}`)
+			msg.channel.send({embed})
+			}
+      })
+  })}
   if (command == "createvc"){
     var ChannelName = args[1]
     msg.guild.createRole({
