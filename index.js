@@ -164,11 +164,14 @@ client.on('message', async msg => {
 			embed.setImage(`${data[i].image}`)
 			embed.setTitle(`${data[i].title}`)
 			embed.setTimestamp()
-			embed.addField(`Is AAA?`,`${data[i].isAAA}`)
-			embed.addField(`Cracked by:`,`${data[i].groups}`)
-			embed.addField(`Release Date:`,`${data[i].releaseDate}`)
-			embed.addField(`Crack Date:`,`${data[i].crackDate}`)
-			embed.addField(`Protections: `,`${data[i].protections}`)
+			embed.addField(`Is AAA?`,`${data[i].isAAA}`, true)
+			embed.addField(`Cracked by:`,`${data[i].groups}`, true)
+			embed.addField(`Release Date:`,`${data[i].releaseDate}`, true)
+			embed.addField(`Crack Date:`,`${data[i].crackDate}`, true)
+			embed.addField(`Protections: `,`${data[i].protections}`, true)
+			if (typeof(data[i].versions) == "string"){
+				embed.addFiled(`Versions:`, `${data[i].versions}`, true)
+			}
 			msg.channel.send({embed})
 			}
       })
